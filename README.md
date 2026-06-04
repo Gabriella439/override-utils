@@ -379,10 +379,40 @@ final: prev: {
   { foo = "NixOS"; }
   ```
 
+- `prefixWith`
+
+  Add a string prefix before the existing value (or before `""` if missing) with
+  a separator:
+
+  ```nix
+  nix-repl> :print override { foo = prefixWith "." "before"; } { }
+  { foo = "before"; }
+
+  nix-repl> :print override { foo = prefixWith "." "before"; } { foo = "after"; }
+  { foo = "before.after"; }
+  ```
+
+- `suffixWith`
+
+  Add a string suffix after the existing value (or after `""` if missing) with a
+  separator:
+
+  ```nix
+  nix-repl> :print override { foo = suffixWith "." "after"; } { }
+  { foo = "after"; }
+
+  nix-repl> :print override { foo = suffixWith "." "after"; } { foo = "before"; }
+  { foo = "before.after"; }
+  ```
+
 - `prefixWords`
 
   Add words before the existing value (or before `""` if missing), inserting a
   space in between
+
+  ```nix
+  prefixWords = prefixWith " "
+  ```
 
   ```nix
   nix-repl> override { foo = prefixWords "hello"; } { }
@@ -398,6 +428,10 @@ final: prev: {
   space in between
 
   ```nix
+  suffixWords = suffixWith " "
+  ```
+
+  ```nix
   nix-repl> override { foo = suffixWords "world"; } { }
   { foo = "world"; }
 
@@ -408,6 +442,10 @@ final: prev: {
 - `prefixLines`
 
   Prepend lines before the existing value (or before `""` if missing)
+
+  ```nix
+  prefixLines = prefixWith "\n"
+  ```
 
   ```nix
   nix-repl> :print override { foo = prefixLines "hello"; } { }
@@ -421,6 +459,10 @@ final: prev: {
 
   Append lines after the existing value (or after `""` if missing), inserting
   a newline in between
+
+  ```nix
+  suffixLines = suffixWith "\n"
+  ```
 
   ```nix
   nix-repl> :print override { foo = suffixLines "world"; } { }

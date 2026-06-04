@@ -208,24 +208,22 @@
             append  = suffix: modify ({ input ? [] }: input  ++ suffix);
             prepend = prefix: modify ({ input ? [] }: prefix ++ input );
 
-            prefix = s: modify ({ input ? "" }: s + input);
-            suffix = s: modify ({ input ? "" }: input + s);
-
-            prefixLines = prefix: modify ({ input ? "" }:
-              if input == "" then prefix else "${prefix}\n${input}"
+            prefixWith = separator: prefix: modify ({ input ? "" }:
+              if input == "" then prefix else "${prefix}${separator}${input}"
             );
 
-            suffixLines = suffix: modify ({ input ? "" }:
-              if input == "" then suffix else "${input}\n${suffix}"
+            suffixWith = separator: suffix: modify ({ input ? "" }:
+              if input == "" then suffix else "${input}${separator}${suffix}"
             );
 
-            prefixWords = prefix: modify ({ input ? "" }:
-              if input == "" then prefix else "${prefix} ${input}"
-            );
+            prefix = prefixWith "";
+            suffix = suffixWith "";
 
-            suffixWords = suffix: modify ({ input ? "" }:
-              if input == "" then suffix else "${input} ${suffix}"
-            );
+            prefixLines = prefixWith "\n";
+            suffixLines = suffixWith "\n";
+
+            prefixWords = prefixWith " ";
+            suffixWords = suffixWith " ";
           };
 
           checks =
@@ -427,6 +425,30 @@
                   expr = override { foo = suffixLines "B"; } { foo = "A"; };
 
                   expected = { foo = "A\nB"; };
+                };
+
+                testPrefixWithAbsent = {
+                  expr = override { foo = prefixWith "." "A"; } { };
+
+                  expected = { foo = "A"; };
+                };
+
+                testPrefixWithPresent = {
+                  expr = override { foo = prefixWith "." "A"; } { foo = "B"; };
+
+                  expected = { foo = "A.B"; };
+                };
+
+                testSuffixWithAbsent = {
+                  expr = override { foo = suffixWith "." "B"; } { };
+
+                  expected = { foo = "B"; };
+                };
+
+                testSuffixWithPresent = {
+                  expr = override { foo = suffixWith "." "B"; } { foo = "A"; };
+
+                  expected = { foo = "A.B"; };
                 };
 
                 testPkgsNoop = {
