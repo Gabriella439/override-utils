@@ -1,7 +1,9 @@
 # `override-utils`
 
 This project implements an ergonomic interface for overriding Nixpkgs
-implemented in pure Nix.
+implemented in pure Nix.  I also wrote a blog post which provides more context
+about this project:
+[Ergonomic overrides for Nixpkgs](https://haskellforall.com/2026/06/ergonomic-overrides-for-nixpkgs).
 
 The inspiration for this project is a blog post I wrote:
 [The hard part of type-checking Nix](https://haskellforall.com/2022/03/the-hard-part-of-type-checking-nix).  In that post I noted that one major source of
