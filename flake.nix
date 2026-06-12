@@ -19,6 +19,8 @@
 
         override =
           let
+            pkgs = nixpkgs.legacyPackages."${system}";
+
             loop = names: argument:
               let
                 adapt = name: value:
@@ -57,7 +59,7 @@
                       … and therefore cannot store an attribute named `${renderAttributePath [ name ]}`.
                       '';
 
-                    missingSystem = abort
+                    missingSystem = { name }: abort
                       ''
 
 
@@ -65,11 +67,11 @@
 
                       You wrote something like this:
                       
-                        override-utils.lib.override {
+                        override-utils.lib.${ name} {
                           ${renderAttributePath newNames} = …;
                         };
 
-                      … but the top-level `lib` attribute does not support `overrideCabal` by
+                      … but the top-level `lib` attribute does not support `${name}` by
                       default because that feature needs a specific `system`.  To fix this
                       error, do this instead:
                       
@@ -140,6 +142,21 @@
                         lib.mapAttrs (_: old: loop newNames value { input = old; })
                           input;
 
+                      package = { input ? null }:
+                        if input == null
+                        then
+                          if system == null
+                            then
+                              missingSystem { name = "package"; }
+                            else
+                              pkgs.stdenv.mkDerivation (finalAttrs:
+                                (loop newNames value { input = finalAttrs; })
+                              )
+                        else
+                          input.overrideAttrs (old:
+                            loop newNames value { input = old; }
+                          );
+
                       override = { input ? missingAttribute }:
                         input.override (old:
                           loop newNames value { input = old; }
@@ -158,9 +175,9 @@
                       overrideCabal = { input ? missingAttribute }:
                         if system == null
                           then
-                            missingSystem
+                            missingSystem { name = "overrideCabal"; }
                           else
-                            nixpkgs.legacyPackages."${system}".haskell.lib.overrideCabal input (old:
+                            pkgs.haskell.lib.overrideCabal input (old:
                               loop newNames value { input = old; }
                             );
                     }."${name}" or (default name);
@@ -537,8 +554,60 @@
 
                 expected = 1;
               };
+
+            testMkDerivationSimple = {
+              expr =
+                (extract (final: override {
+                  foo.package = set {
+                    pname = "foo";
+
+                    version = "1.0.0";
+
+                    buildCommand = "touch $out";
+                  };
+                })).foo.name;
+
+              expected = "foo-1.0.0";
             };
 
+            testMkDerivationFixedpoint = {
+              expr =
+                (extract (final: override {
+                  foo.package = modify ({ input }: {
+                    pname = "foo";
+
+                    version = "1.0.0";
+
+                    buildCommand = "echo ${input.pname} > $out";
+                  });
+                })).foo.buildCommand;
+
+              expected = "echo foo > $out";
+            };
+
+            testMkDerivationOverride = {
+              expr =
+                let
+                  overlay0 = final: override {
+                    foo.package = set {
+                      pname = "foo";
+
+                      version = "1.0.0";
+
+                      buildCommand = "touch $out";
+                    };
+                  };
+
+                  overlay1 = final: override {
+                    foo.package.pname = set "bar";
+                  };
+
+                in
+                  (extract (lib.composeExtensions overlay0 overlay1)).foo.name;
+
+              expected = "bar-1.0.0";
+            };
+          };
           in
             { tests =
                 if failures == []
