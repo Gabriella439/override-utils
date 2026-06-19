@@ -555,40 +555,9 @@
                 expected = 1;
               };
 
-            testMkDerivationSimple = {
-              expr =
-                (extract (final: override {
-                  foo.package = set {
-                    pname = "foo";
-
-                    version = "1.0.0";
-
-                    buildCommand = "touch $out";
-                  };
-                })).foo.name;
-
-              expected = "foo-1.0.0";
-            };
-
-            testMkDerivationFixedpoint = {
-              expr =
-                (extract (final: override {
-                  foo.package = modify ({ input }: {
-                    pname = "foo";
-
-                    version = "1.0.0";
-
-                    buildCommand = "echo ${input.pname} > $out";
-                  });
-                })).foo.buildCommand;
-
-              expected = "echo foo > $out";
-            };
-
-            testMkDerivationOverride = {
-              expr =
-                let
-                  overlay0 = final: override {
+              testMkDerivationSimple = {
+                expr =
+                  (extract (final: override {
                     foo.package = set {
                       pname = "foo";
 
@@ -596,19 +565,52 @@
 
                       buildCommand = "touch $out";
                     };
-                  };
+                  })).foo.name;
 
-                  overlay1 = final: override {
-                    foo.package.pname = set "bar";
-                  };
+                expected = "foo-1.0.0";
+              };
 
-                in
-                  (extract (lib.composeExtensions overlay0 overlay1)).foo.name;
+              testMkDerivationFixedpoint = {
+                expr =
+                  (extract (final: override {
+                    foo.package = modify ({ input }: {
+                      pname = "foo";
 
-              expected = "bar-1.0.0";
+                      version = "1.0.0";
+
+                      buildCommand = "echo ${input.pname} > $out";
+                    });
+                  })).foo.buildCommand;
+
+                expected = "echo foo > $out";
+              };
+
+              testMkDerivationOverride = {
+                expr =
+                  let
+                    overlay0 = final: override {
+                      foo.package = set {
+                        pname = "foo";
+
+                        version = "1.0.0";
+
+                        buildCommand = "touch $out";
+                      };
+                    };
+
+                    overlay1 = final: override {
+                      foo.package.pname = set "bar";
+                    };
+
+                  in
+                    (extract (lib.composeExtensions overlay0 overlay1)).foo.name;
+
+                expected = "bar-1.0.0";
+              };
             };
-          };
-          in
+
+            in
+
             { tests =
                 if failures == []
                 then pkgs.runCommand "override-utils-tests" { } ''
@@ -619,6 +621,7 @@
 
                   ${lib.generators.toPretty { } failures}
                 '';
+
             }
         );
       };
