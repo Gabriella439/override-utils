@@ -617,25 +617,8 @@
                 else throw ''
                   override-utils: Test failures
 
-<<<<<<< HEAD
                   ${lib.generators.toPretty { } failures}
                 '';
-||||||| parent of 0da972e (make flake checks a derivation)
-=======
-            };
-
-          in
-            { tests =
-                if failures == []
-                then pkgs.runCommand "override-utils-tests" { } ''
-                  touch $out
-                ''
-                else throw ''
-                  override-utils: Test failures
-
-                  ${lib.generators.toPretty { } failures}
-                '';
->>>>>>> 0da972e (make flake checks a derivation)
             }
         );
       };
