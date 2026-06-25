@@ -274,8 +274,8 @@
 
             extract = f: pkgs.appendOverlays [ f ];
 
-          in
-            with (self.lib."${system}");
+            failures =
+              with (self.lib."${system}");
 
             lib.debug.runTests {
               testEmptyOverride = {
@@ -607,6 +607,20 @@
 
                 expected = "bar-1.0.0";
               };
+            };
+
+            in
+
+            { tests =
+                if failures == []
+                then pkgs.runCommand "override-utils-tests" { } ''
+                  touch $out
+                ''
+                else throw ''
+                  override-utils: Test failures
+
+                  ${lib.generators.toPretty { } failures}
+                '';
 
             }
         );
